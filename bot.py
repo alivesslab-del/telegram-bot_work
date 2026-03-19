@@ -149,29 +149,22 @@ def daily_message():
 ※ 숫자 틀리면 다음주 꼬임"""
     }
 
-    return messages.get(weekday, None)
+     return messages.get(weekday, None)
 
-# ✅ 실행 루프
+# 🚀 실행 함수 (GitHub Actions용)
 def run():
-    while True:
-        now = datetime.datetime.now()
+    now = datetime.datetime.now()
 
-        # 평일 08:25
-        if now.weekday() < 5 and now.hour == 8 and now.minute == 25:
-            send_message("[아침 루틴]\n- 채널 점검\n- 발주 확인\n- 매출 체크")
+    # 평일이면 무조건 실행
+    if now.weekday() < 5:
+        send_message("[아침 루틴]\n- 채널 점검\n- 발주 확인\n- 매출 체크")
 
-            msg = daily_message()
-            if msg:
-                send_message(msg)
+        msg = daily_message()
+        if msg:
+            send_message(msg)
 
-            # 월요일이면 주차 메시지 추가
-            if now.weekday() == 0:
-                send_message(weekly_message())
-
-            time.sleep(60)
-
-        time.sleep(20)
-
+        if now.weekday() == 0:
+            send_message(weekly_message())
 
 run()
 
