@@ -1,14 +1,25 @@
 import requests
+import os
 from datetime import datetime, date
 from zoneinfo import ZoneInfo
 
-TOKEN = "8513262392:AAEH5OkiGB4cFUR3lLRb01admHVz9Jrb0yc"
-CHAT_ID = "8250645779"
+import os
+TOKEN = os.getenv("8513262392:AAGlDEyw-Vkmcoj0CjzZzDo2oYM9-M2p9GA")
+CHAT_ID = os.getenv("8250645779")
+
+
 def send_message(text):
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
     data = {"chat_id": CHAT_ID, "text": text}
-    requests.post(url, data=data)
-# ✅ 중복 방지 (하루 1번)
+
+    res = requests.post(url, data=data)
+
+    print("========== TELEGRAM DEBUG ==========")
+    print("STATUS:", res.status_code)
+    print("RESPONSE:", res.text)
+    print("====================================")
+
+
 def already_sent_today():
     today = date.today()
     try:
@@ -24,26 +35,25 @@ def mark_sent():
         f.write(str(today))
 
 
-# ✅ 주차 계산
 def get_week_of_month():
     today = date.today()
     first_day = today.replace(day=1)
     return (today.day + first_day.weekday()) // 7 + 1
 
 
-# ✅ 월말 평일 체크
 def is_last_workday():
     today = datetime.now(ZoneInfo("Asia/Seoul")).date()
-    next_day = today.replace(day=today.day + 1)
+    try:
+        next_day = today.replace(day=today.day + 1)
+    except:
+        return today.weekday() < 5
 
-    # 다음날이 다른 달이면 오늘이 월말
     if next_day.month != today.month:
         return today.weekday() < 5
 
     return False
 
 
-# ✅ 공통 메시지
 def common_message():
     return (
         "[공통 업무]\n"
@@ -53,7 +63,6 @@ def common_message():
     )
 
 
-# ✅ 요일별 메시지
 def daily_message(weekday):
     messages = {
         0: "[월요일]\n기본 운영 집중",
@@ -94,7 +103,8 @@ def daily_message(weekday):
     }
 
     return messages.get(weekday, "")
-# ✅ 월요일 주간 메시지
+
+
 def weekly_message():
     week = get_week_of_month()
 
@@ -112,33 +122,26 @@ def weekly_message():
 def run():
     now = datetime.now(ZoneInfo("Asia/Seoul"))
 
-    # ✅ 평일만
+    print("현재 한국 시간:", now)
+
     if now.weekday() >= 5:
+        print("주말이라 실행 안함")
         return
 
-    # ✅ 원하는 시간 (예: 08:20)
-    if not (now.hour == 8 and now.minute == 20):
-        return
-
-    # ✅ 하루 1번 제한
     if already_sent_today():
+        print("이미 오늘 보냄")
         return
 
-    # 1️⃣ 공통
     send_message(common_message())
-
-    # 2️⃣ 요일별
     send_message(daily_message(now.weekday()))
 
-    # 3️⃣ 월요일 + 주차
     if now.weekday() == 0:
         send_message(weekly_message())
 
-    # 4️⃣ 월말
     if is_last_workday():
         send_message("[월말 업무]\n- 월말 마감 체크")
 
     mark_sent()
 
-
+print("현재 TOKEN:", TOKEN)
 run()
